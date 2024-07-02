@@ -1,0 +1,354 @@
+openapi: '3.1.0'
+info:
+  title: Template for Backend
+  description: Made by Mr Rust
+  version: 1.0.0
+  contact:
+    email: felixmartel.no@gmail.com
+    url: 'https://example.com/'
+
+# servers:
+#   - url: "https://localhost:3005/"
+#     description: for local host - secure
+#   - url: "http://localhost:3005/"
+#     description: for local host - regular
+
+servers:
+  - url: '{protocol}://{url}/'
+    description: for local host
+    variables:
+      url:
+        enum:
+          - localhost:3005
+          # - other site
+        default: localhost:3005
+      protocol:
+        enum:
+          - http
+          - https
+        default: http
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /:
+    get:
+      tags:
+        - Health
+      summary: health check
+      responses:
+        200:
+          description: Server is Running now!
+        400:
+          description: Bad request
+        500:
+          description: internal server error
+
+  /user/getNonce:
+    get:
+      tags:
+        - Auth
+      summary: get request to logout the user. Also removes httpOnly cookies
+      responses:
+        200:
+          description: All good success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /user/signup:
+    post:
+      tags:
+        - Auth
+      summary: signup a new user. required files are - name, email, password
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  default: dev
+                  required: true
+                email:
+                  type: string
+                  default: dev@tester.com
+                password:
+                  type: string
+                  default: 123456
+      responses:
+        200:
+          description: All good success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  user:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+                      _id:
+                        type: string
+                      createdAt:
+                        type: string
+                      updatedAt:
+                        type: string
+        400:
+          description: Bad request
+        422:
+          description: Bad request ,check fields
+        500:
+          description: internal server error
+
+  /user/login:
+    post:
+      tags:
+        - Auth
+      summary: login a new user. required files are -  email and password. Also adds httpOnly cookie in browser. It sends token in response too.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  default: dev@tester.com
+                password:
+                  type: string
+                  default: 123456
+      responses:
+        200:
+          description: All good success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  user:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+                      _id:
+                        type: string
+                      createdAt:
+                        type: string
+        400:
+          description: Bad request
+        500:
+          description: internal server error
+
+  /user/:
+    get:
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      tags:
+        - User
+      summary: Gets all details about logged in user. Send token in cookies as named token or send Bearer Auth
+      requestBody:
+      responses:
+        200:
+          description: All good success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  user:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+                      _id:
+                        type: string
+                      createdAt:
+                        type: string
+        400:
+          description: Bad request
+        401:
+          description: Bad request, probably not logged in
+        500:
+          description: internal server error
+
+  /user/admin/users:
+    get:
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      tags:
+        - Admin
+      summary: If user is admin, response will get array of all users
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          required: false
+          description: Page Number.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          required: false
+          description: The number of items to return.
+        - in: query
+          name: search
+          style: deepObject
+          explode: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              role:
+                type: string
+
+          description: search by only listed paramters are available.
+      requestBody:
+      responses:
+        200:
+          description: All good success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        email:
+                          type: string
+                        role:
+                          type: string
+                        _id:
+                          type: string
+                        createdAt:
+                          type: string
+
+        400:
+          description: Bad request
+        500:
+          description: internal server error
+
+  /user/admin/user/{id}:
+    get:
+      security:
+        - bearerAuth: []
+        - cookieAuth: []
+      tags:
+        - Admin
+      summary: If user is admin, response will get details of 1 user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+
+      responses:
+        200:
+          description: All good success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      email:
+                        type: string
+                      role:
+                        type: string
+                      _id:
+                        type: string
+                      createdAt:
+                        type: string
+
+        400:
+          description: Bad request
+        500:
+          description: internal server error
+    delete:
+      tags:
+        - Admin
+      summary: If user is admin, delete the user with given id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+      responses:
+        200:
+          description: All good success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+        400:
+          description: Bad request
+        500:
+          description: internal server error

@@ -1,0 +1,153 @@
+{
+	"info": {
+		"_postman_id": "309a8ef1-8a38-46ff-9b69-7f5b1bb24e10",
+		"name": "Sanctum",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19464534"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "getNonce",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3005/user/getNonce?walletAddress=GYGRNfzy7qnwXbwjW2KMMsWv5XfNdzHKzTMRG9X6cR8v",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3005",
+							"path": [
+								"user",
+								"getNonce"
+							],
+							"query": [
+								{
+									"key": "walletAddress",
+									"value": "GYGRNfzy7qnwXbwjW2KMMsWv5XfNdzHKzTMRG9X6cR8v"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "signUp",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"walletAddress\": \"GYGRNfzy7qnwXbwjW2KMMsWv5XfNdzHKzTMRG9X6cR8v\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3005/user/signup",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3005",
+							"path": [
+								"user",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "signIn",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"walletAddress\": \"GYGRNfzy7qnwXbwjW2KMMsWv5XfNdzHKzTMRG9X6cR8v\",\r\n    \"signature\": \"9Eo3cuPdpAfcj6d3ts3L3qjW7Y7D7sg5t1dZkPusrhmoANPeeCzo9JiT8omzxHPRTAwVMKj2uLEdvyx9aigh3Ae\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3005/user/signin",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3005",
+							"path": [
+								"user",
+								"signin"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "User",
+			"item": [
+				{
+					"name": "me",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjY3ZjA5YjE3MjNmZDg1YjYxM2UzOGUzIiwid2FsbGV0YWRkcmVzcyI6IkdZR1JOZnp5N3Fud1hid2pXMktNTXNXdjVYZk5kekhLelRNUkc5WDZjUjh2IiwibmFtZSI6IndKTnp4MXJ5OFZYWHJGRGUiLCJyb2xlIjoyfSwiaWF0IjoxNzE5NjAxODQyLCJleHAiOjE3MjAwMzM4NDJ9.8xUBlqD0yFp_hWyuv-xcp5RnE8KvFTKS0WG8fMJlgvY",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3005/user/",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3005",
+							"path": [
+								"user",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "health",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:3005/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3005",
+					"path": [
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
