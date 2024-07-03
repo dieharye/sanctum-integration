@@ -4,9 +4,10 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../../config';
 import { authMiddleware, AuthRequest } from '../../middleware';
 import User from '../../model/UserModel';
-import UserModel from '../../model/UserModel';
+import InvModel from '../../model/InvModel';
 import { generateRandomNonce, uuid } from '../../utils/generator';
 import { validateEd25519Address, verifySignature } from '../../utils/solana';
+import { getAdminBalance } from '../../utils/transactions';
 
 // Create a new instance of the Express Router
 const UserRouter = Router();
@@ -23,7 +24,7 @@ UserRouter.get('/getNonce', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'wallet address is invalid' });
     }
 
-    const user = await UserModel.findOne({
+    const user = await User.findOne({
       walletAddress,
     });
     if (user) {
@@ -60,11 +61,11 @@ UserRouter.post(
 
       const nonce = generateRandomNonce();
 
-      let user = await UserModel.findOne({
+      let user = await User.findOne({
         walletAddress,
       });
       if (user) {
-        await UserModel.findOneAndUpdate({ walletAddress }, { nonce });
+        await User.findOneAndUpdate({ walletAddress }, { nonce });
       } else {
         const name = uuid();
         const newUser = new User({
@@ -121,7 +122,7 @@ UserRouter.post(
         return res.status(400).json({ error: 'Provided signature is invalid' });
       }
 
-      await UserModel.findByIdAndUpdate(
+      await User.findByIdAndUpdate(
         user.id,
         {
           lastLogin: new Date(),
@@ -165,5 +166,43 @@ UserRouter.get('/', authMiddleware, async (req: AuthRequest, res) => {
     return res.status(500).send({ error: err });
   }
 });
+
+
+// @route    POST api/users/deposit
+// @desc     Deposit
+// @access   Private
+UserRouter.post('/deposit', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).send({ error: 'User not found' });
+    }
+
+    const userId = user._id;
+    const { amount } = req.body;
+
+    if (typeof amount !== 'number' || amount <= 0) {
+      return res.status(400).send({ error: 'Invalid amount' });
+    }
+
+    const balance = await getAdminBalance();
+    if (balance === 0) {
+      return res.status(500).send({ error: 'Failed to retrieve admin balance' });
+    }
+
+    const percent = amount / balance;
+    const invest = new InvModel({ userId, amount, percent });
+
+    // Save the investment to the database
+    await invest.save();
+
+    res.status(201).send({ success: true, invest });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ error: 'Internal Server Error' });
+  }
+});
+
 
 export default UserRouter;

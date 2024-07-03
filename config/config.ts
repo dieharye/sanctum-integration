@@ -16,3 +16,5 @@ export const SIGN_MESSAGE = 'Sign this message to authenticate your wallet';
 export const CONNECTION =
   process.env.RPC_URL || 'https://api.mainnet-beta.solana.com';
 export const UNIT = 180;
+
+export const ADMIN_ACCOUNT = "4Y2QYrRGYonzy8R3fJ4cmLXies6q6tLFJF7ThNFbWfwx";
