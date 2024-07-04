@@ -3,13 +3,12 @@
   "version": "1.0.0",
   "description": "Sanctum-Backend",
   "main": "index.ts",
-  "type": "module",
   "pre-commit": [
     "ts.check",
     "build"
   ],
   "scripts": {
-    "dev": "ts-node-dev index.ts",
+    "dev": "ts-node index.ts",
     "index": "ts-node-dev indexer.ts",
     "start": "ts-node index.ts",
     "ts.check": "tsc --project tsconfig.json",
@@ -18,8 +17,11 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",
+    "@solana-developers/helpers": "^2.3.0",
+    "@solana/spl-token": "0.3.6",
     "@solana/web3.js": "^1.91.4",
     "@types/multer": "^1.4.11",
+    "@types/node": "^20.14.9",
     "bcryptjs": "^2.4.3",
     "bip39": "^3.1.0",
     "body-parser": "^1.20.2",
@@ -58,7 +60,6 @@
     "@types/yamljs": "^0.2.31",
     "cross-env": "^7.0.3",
     "prettier": "2.6.2",
-    "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0"
   }
 }

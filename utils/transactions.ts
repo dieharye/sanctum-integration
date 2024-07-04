@@ -1,71 +1,71 @@
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet';
 import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { CONNECTION, ADMIN_ACCOUNT } from '../config/config';
+import { CONNECTION, ADMIN_ACCOUNT, HPL_TOKEN_MINT, EXCHANGE_RATE, JWT_SECRET } from '../config/config';
+import { getOrCreateAssociatedTokenAccount, mintTo } from "@solana/spl-token";
+import { getKeypairFromEnvironment } from "@solana-developers/helpers";
+import 'dotenv/config';
 
-export const connection = new Connection(CONNECTION, 'confirmed');
 
-export const decodeBs58 = (encodedString: string) => {
+const connection = new Connection(CONNECTION, 'confirmed');
+
+const decodeBs58 = (encodedString: string) => {
   return new TextEncoder().encode(encodedString);
 };
 
-export const decodeBs64 = (encodedString: string) => {
+const decodeBs64 = (encodedString: string) => {
   return Buffer.from(encodedString, 'base64');
 };
 
-export type SupportedEncoding = 'base58' | 'base64';
+type SupportedEncoding = 'base58' | 'base64';
 
-export const decodeTransaction = (
+const decodeTransaction = (
   encodedTransaction: string,
   encoding: SupportedEncoding = 'base64'
-) => {
-  if (encoding === 'base58') {
-    return Transaction.from(decodeBs58(encodedTransaction));
-  } else if (encoding === 'base64') {
-    return Transaction.from(decodeBs64(encodedTransaction));
-  } else {
-    throw new Error('Unsupported encoding format, base58 and base64 supported');
+): Transaction => {
+  switch (encoding) {
+    case 'base58':
+      return Transaction.from(decodeBs58(encodedTransaction));
+    case 'base64':
+      return Transaction.from(decodeBs64(encodedTransaction));
+    default:
+      throw new Error('Unsupported encoding format, base58 and base64 supported');
   }
 };
 
-export const adminSignAndConfirmTransaction = async (
+const adminSignAndConfirmTransaction = async (
   ADMIN_WALLET: NodeWallet,
   tx: Transaction
-) => {
-  // Sign the transaction with admin's Keypair
+): Promise<{ confirmed: any; signature: string }> => {
   tx = await ADMIN_WALLET.signTransaction(tx);
-
   return confirmTransaction(tx);
 };
 
-export const confirmTransaction = async (tx: Transaction) => {
+const confirmTransaction = async (tx: Transaction): Promise<{ confirmed: any; signature: string }> => {
   const sTx = tx.serialize();
 
-  // Send the raw transaction
   const options = {
     commitment: 'confirmed',
     skipPreflight: false,
   };
 
-  // Confirm the transaction
   const signature = await connection.sendRawTransaction(sTx, options);
   const confirmed = await connection.confirmTransaction(signature, 'confirmed');
 
   return { confirmed, signature };
 };
 
-export const getAdminBalance = async (address: string = ADMIN_ACCOUNT): Promise<number> => {
-  const connection = new Connection(CONNECTION, "confirmed");
+const getAdminBalance = async (address: string = ADMIN_ACCOUNT): Promise<number> => {
   const publicKey = new PublicKey(address);
   try {
     const balance = await connection.getBalance(publicKey);
     return balance;
   } catch (error) {
-    console.log(error);
+    console.error(error);
     return 0;
   }
 };
 
-export const getPrice = async (): Promise<number | null> => {
+const getPrice = async (): Promise<number | null> => {
   interface Pair {
     priceUsd: string;
   }
@@ -94,4 +94,48 @@ export const getPrice = async (): Promise<number | null> => {
     console.error('Failed to fetch price:', error);
     return null;
   }
+};
+
+const mintToken = async (address: string, amount: number): Promise<boolean> => {
+  const tokenAmount = Math.floor(amount * EXCHANGE_RATE);
+  const user = getKeypairFromEnvironment("SECRET_KEY");
+  const tokenMintAccount = new PublicKey(HPL_TOKEN_MINT);
+  const recipient = new PublicKey(address);
+  console.log(user)
+  return true
+  try {
+    const tokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      user,
+      tokenMintAccount,
+      recipient
+    );
+
+    const transactionSignature = await mintTo(
+      connection,
+      user,
+      tokenMintAccount,
+      tokenAccount.address,
+      user.publicKey,
+      tokenAmount
+    );
+    console.log(`Transaction Signature: ${transactionSignature}`);
+
+    return true;
+  } catch (error) {
+    console.error('Error minting token:', error);
+    return false;
+  }
+};
+
+export {
+  connection,
+  decodeBs58,
+  decodeBs64,
+  decodeTransaction,
+  adminSignAndConfirmTransaction,
+  confirmTransaction,
+  getAdminBalance,
+  getPrice,
+  mintToken,
 };
