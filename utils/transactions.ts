@@ -6,19 +6,20 @@ import { getKeypairFromEnvironment } from "@solana-developers/helpers";
 import 'dotenv/config';
 
 
-const connection = new Connection(CONNECTION, 'confirmed');
+export const connection = new Connection(CONNECTION, 'confirmed');
+export const ADMIN_ACCOUNT_PUBKEY = new PublicKey(ADMIN_ACCOUNT)
 
-const decodeBs58 = (encodedString: string) => {
+export const decodeBs58 = (encodedString: string) => {
   return new TextEncoder().encode(encodedString);
 };
 
-const decodeBs64 = (encodedString: string) => {
+export const decodeBs64 = (encodedString: string) => {
   return Buffer.from(encodedString, 'base64');
 };
 
-type SupportedEncoding = 'base58' | 'base64';
+export type SupportedEncoding = 'base58' | 'base64';
 
-const decodeTransaction = (
+export const decodeTransaction = (
   encodedTransaction: string,
   encoding: SupportedEncoding = 'base64'
 ): Transaction => {
@@ -32,7 +33,7 @@ const decodeTransaction = (
   }
 };
 
-const adminSignAndConfirmTransaction = async (
+export const adminSignAndConfirmTransaction = async (
   ADMIN_WALLET: NodeWallet,
   tx: Transaction
 ): Promise<{ confirmed: any; signature: string }> => {
@@ -40,7 +41,7 @@ const adminSignAndConfirmTransaction = async (
   return confirmTransaction(tx);
 };
 
-const confirmTransaction = async (tx: Transaction): Promise<{ confirmed: any; signature: string }> => {
+export const confirmTransaction = async (tx: Transaction): Promise<{ confirmed: any; signature: string }> => {
   const sTx = tx.serialize();
 
   const options = {
@@ -54,7 +55,7 @@ const confirmTransaction = async (tx: Transaction): Promise<{ confirmed: any; si
   return { confirmed, signature };
 };
 
-const getAdminBalance = async (address: string = ADMIN_ACCOUNT): Promise<number> => {
+export const getAdminBalance = async (address: string = ADMIN_ACCOUNT): Promise<number> => {
   const publicKey = new PublicKey(address);
   try {
     const balance = await connection.getBalance(publicKey);
@@ -65,7 +66,7 @@ const getAdminBalance = async (address: string = ADMIN_ACCOUNT): Promise<number>
   }
 };
 
-const getPrice = async (): Promise<number | null> => {
+export const getPrice = async (): Promise<number | null> => {
   interface Pair {
     priceUsd: string;
   }
@@ -96,13 +97,12 @@ const getPrice = async (): Promise<number | null> => {
   }
 };
 
-const mintToken = async (address: string, amount: number): Promise<boolean> => {
+export const mintToken = async (address: string, amount: number): Promise<boolean> => {
   const tokenAmount = Math.floor(amount * EXCHANGE_RATE);
   const user = getKeypairFromEnvironment("SECRET_KEY");
   const tokenMintAccount = new PublicKey(HPL_TOKEN_MINT);
   const recipient = new PublicKey(address);
   console.log(user)
-  return true
   try {
     const tokenAccount = await getOrCreateAssociatedTokenAccount(
       connection,
@@ -128,14 +128,18 @@ const mintToken = async (address: string, amount: number): Promise<boolean> => {
   }
 };
 
-export {
-  connection,
-  decodeBs58,
-  decodeBs64,
-  decodeTransaction,
-  adminSignAndConfirmTransaction,
-  confirmTransaction,
-  getAdminBalance,
-  getPrice,
-  mintToken,
-};
+// Set up account change listener
+export async function Hook() {
+  let balance: number = Number(await getAdminBalance());
+  const hook = connection.onAccountChange(ADMIN_ACCOUNT_PUBKEY, async (accountInfo, context) => {
+    const signatures = await connection.getSignaturesForAddress(ADMIN_ACCOUNT_PUBKEY);
+    const transaction = await connection.getTransaction(signatures[0].signature);
+    const difference = accountInfo.lamports - balance;
+    if (difference < 0) return
+    balance = accountInfo.lamports;
+    const signer: PublicKey | any = transaction?.transaction?.message.accountKeys[0]
+    console.log(signer?.toBase58())
+
+    // await mintToken(signer.toBase58(), balance)
+  });
+}

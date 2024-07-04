@@ -8,7 +8,7 @@
     "build"
   ],
   "scripts": {
-    "dev": "ts-node index.ts",
+    "dev": "ts-node-dev index.ts",
     "index": "ts-node-dev indexer.ts",
     "start": "ts-node index.ts",
     "ts.check": "tsc --project tsconfig.json",
