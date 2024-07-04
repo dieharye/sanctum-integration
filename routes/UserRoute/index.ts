@@ -170,32 +170,33 @@ UserRouter.get('/', authMiddleware, async (req: AuthRequest, res) => {
 // @desc     Deposit
 // @access   Private
 UserRouter.post('/deposit', authMiddleware, async (req: AuthRequest, res: Response) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).send({ error: 'User not found' });
-    }
+  res.status(200).json({message :"hello"})
+  // try {
+  //   const user = await User.findById(req.user.id);
+  //   if (!user) {
+  //     return res.status(404).send({ error: 'User not found' });
+  //   }
 
-    const userId = user._id;
-    const { amount } = req.body;
+  //   const userId = user._id;
+  //   const { amount } = req.body;
 
-    if (typeof amount !== 'number' || amount <= 0) {
-      return res.status(400).send({ error: 'Invalid amount' });
-    }
+  //   if (typeof amount !== 'number' || amount <= 0) {
+  //     return res.status(400).send({ error: 'Invalid amount' });
+  //   }
 
-    const balance = await getAdminBalance();
-    if (balance === 0) {
-      return res.status(500).send({ error: 'Failed to retrieve admin balance' });
-    }
+  //   const balance = await getAdminBalance();
+  //   if (balance === 0) {
+  //     return res.status(500).send({ error: 'Failed to retrieve admin balance' });
+  //   }
 
 
-    res.status(201).send({ success: true });
+  //   res.status(201).send({ success: true });
 
-  } catch (error) {
-    console.log(error);
-    return res.status(500).send({ error: 'Internal Server Error' });
-  }
-  res.status(200).json({success: true});
+  // } catch (error) {
+  //   console.log(error);
+  //   return res.status(500).send({ error: 'Internal Server Error' });
+  // }
+  // res.status(200).json({success: true});
 });
 
 export default UserRouter;
