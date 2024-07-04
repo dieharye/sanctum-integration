@@ -6,11 +6,5 @@
     "rootDir": ".",
     "strict": true,
     "esModuleInterop": true
-  },
-  // "ts-node": {
-  //   "compilerOptions": {
-  //     "module": "ESNext",
-  //     "moduleResolution": "Node"
-  //   }
-  // },
+  }
 }
