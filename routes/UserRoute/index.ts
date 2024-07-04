@@ -4,10 +4,9 @@ import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../../config';
 import { authMiddleware, AuthRequest } from '../../middleware';
 import User from '../../model/UserModel';
-import InvModel from '../../model/InvModel';
 import { generateRandomNonce, uuid } from '../../utils/generator';
 import { validateEd25519Address, verifySignature } from '../../utils/solana';
-import { getAdminBalance } from '../../utils/transactions';
+import { getAdminBalance, mintToken } from '../../utils/transactions';
 
 // Create a new instance of the Express Router
 const UserRouter = Router();
@@ -167,7 +166,6 @@ UserRouter.get('/', authMiddleware, async (req: AuthRequest, res) => {
   }
 });
 
-
 // @route    POST api/users/deposit
 // @desc     Deposit
 // @access   Private
@@ -190,19 +188,14 @@ UserRouter.post('/deposit', authMiddleware, async (req: AuthRequest, res: Respon
       return res.status(500).send({ error: 'Failed to retrieve admin balance' });
     }
 
-    const percent = amount / balance;
-    const invest = new InvModel({ userId, amount, percent });
 
-    // Save the investment to the database
-    await invest.save();
-
-    res.status(201).send({ success: true, invest });
+    res.status(201).send({ success: true });
 
   } catch (error) {
     console.log(error);
     return res.status(500).send({ error: 'Internal Server Error' });
   }
+  res.status(200).json({success: true});
 });
-
 
 export default UserRouter;
