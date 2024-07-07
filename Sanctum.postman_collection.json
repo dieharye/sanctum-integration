@@ -93,14 +93,6 @@
 						"url": "http://localhost:3005/user/"
 					},
 					"response": []
-				},
-				{
-					"name": "deposit",
-					"request": {
-						"method": "GET",
-						"header": []
-					},
-					"response": []
 				}
 			]
 		},

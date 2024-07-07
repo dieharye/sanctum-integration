@@ -1,13 +1,17 @@
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet';
-import { Connection, PublicKey, Transaction } from '@solana/web3.js';
-import { CONNECTION, ADMIN_ACCOUNT, HPL_TOKEN_MINT, EXCHANGE_RATE, JWT_SECRET } from '../config/config';
-import { getOrCreateAssociatedTokenAccount, mintTo } from "@solana/spl-token";
+import { Connection, PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction } from '@solana/web3.js';
+import { CONNECTION, ADMIN_ACCOUNT, HPL_TOKEN_MINT, ADMIN_HPL, FEE_RATE, TREASURY_WALLET } from '../config/config';
+import { getOrCreateAssociatedTokenAccount, mintTo, burn } from "@solana/spl-token";
 import { getKeypairFromEnvironment } from "@solana-developers/helpers";
 import 'dotenv/config';
 
 
 export const connection = new Connection(CONNECTION, 'confirmed');
-export const ADMIN_ACCOUNT_PUBKEY = new PublicKey(ADMIN_ACCOUNT)
+export const ADMIN_ACCOUNT_PUBKEY = new PublicKey(ADMIN_ACCOUNT);
+export const ADMIN_HPL_PUBKEY = new PublicKey(ADMIN_HPL)
+export const TREASURY_WALLET_PUBKEY = new PublicKey(TREASURY_WALLET)
+const admin = getKeypairFromEnvironment("SECRET_KEY");
+
 
 export const decodeBs58 = (encodedString: string) => {
   return new TextEncoder().encode(encodedString);
@@ -35,7 +39,7 @@ export const decodeTransaction = (
 
 export const adminSignAndConfirmTransaction = async (
   ADMIN_WALLET: NodeWallet,
-  tx: Transaction
+  tx: any
 ): Promise<{ confirmed: any; signature: string }> => {
   tx = await ADMIN_WALLET.signTransaction(tx);
   return confirmTransaction(tx);
@@ -55,8 +59,8 @@ export const confirmTransaction = async (tx: Transaction): Promise<{ confirmed: 
   return { confirmed, signature };
 };
 
-export const getAdminBalance = async (address: string = ADMIN_ACCOUNT): Promise<number> => {
-  const publicKey = new PublicKey(address);
+export const getAdminBalance = async (): Promise<number> => {
+  const publicKey = new PublicKey(ADMIN_ACCOUNT);
   try {
     const balance = await connection.getBalance(publicKey);
     return balance;
@@ -98,27 +102,29 @@ export const getPrice = async (): Promise<number | null> => {
 };
 
 export const mintToken = async (address: string, amount: number): Promise<boolean> => {
-  const tokenAmount = Math.floor(amount * EXCHANGE_RATE);
-  const user = getKeypairFromEnvironment("SECRET_KEY");
+  const tokenAmount = amount
   const tokenMintAccount = new PublicKey(HPL_TOKEN_MINT);
   const recipient = new PublicKey(address);
-  console.log(user)
+  console.log("admin:", admin)
   try {
     const tokenAccount = await getOrCreateAssociatedTokenAccount(
       connection,
-      user,
+      admin,
       tokenMintAccount,
       recipient
     );
 
+    console.log("tokenAccount:", tokenAccount)
+
     const transactionSignature = await mintTo(
       connection,
-      user,
+      admin,
       tokenMintAccount,
       tokenAccount.address,
-      user.publicKey,
+      ADMIN_ACCOUNT_PUBKEY,
       tokenAmount
     );
+
     console.log(`Transaction Signature: ${transactionSignature}`);
 
     return true;
@@ -128,8 +134,72 @@ export const mintToken = async (address: string, amount: number): Promise<boolea
   }
 };
 
+export const burnToken = async (address: string, amount: number): Promise<boolean> => {
+  const tokenAmount = amount
+  const tokenMintAccount = new PublicKey(HPL_TOKEN_MINT);
+  const recipient = new PublicKey(address);
+  try {
+    const tokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      admin,
+      tokenMintAccount,
+      recipient
+    );
+
+    console.log(amount);
+    const transactionSignature = await burn(
+      connection,
+      admin,
+      tokenAccount.address,
+      tokenMintAccount,
+      recipient,
+      tokenAmount
+    );
+
+    console.log(`Transaction Signature: ${transactionSignature}`);
+
+    return true;
+  } catch (error) {
+    console.error('Error minting token:', error);
+    return false;
+  }
+}
+
+export const transferToken = async (address: string, difference: number) => {
+  const recipient = new PublicKey(address)
+  const transferTransaction = new Transaction().add(
+    SystemProgram.transfer({
+      fromPubkey: ADMIN_ACCOUNT_PUBKEY,
+      toPubkey: recipient,
+      lamports: difference
+    })
+  );
+  try {
+    const signature = await sendAndConfirmTransaction(connection, transferTransaction, [admin]);
+    console.log(`${difference}lamports were transfered to ${address} signature: ${signature}`)
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+export const transferToTW = async (fee:number) => {
+  const transferTransaction = new Transaction().add(
+    SystemProgram.transfer({
+      fromPubkey: ADMIN_ACCOUNT_PUBKEY,
+      toPubkey: TREASURY_WALLET_PUBKEY,
+      lamports: fee
+    })
+  );
+  try {
+    const signature = await sendAndConfirmTransaction(connection, transferTransaction, [admin]);
+    console.log(`${fee}lamports were transfered to ${TREASURY_WALLET} signature: ${signature}`)
+  } catch (error) {
+    console.log(error)
+  }
+}
+
 // Set up account change listener
-export async function Hook() {
+export async function solHook() {
   let balance: number = Number(await getAdminBalance());
   const hook = connection.onAccountChange(ADMIN_ACCOUNT_PUBKEY, async (accountInfo, context) => {
     const signatures = await connection.getSignaturesForAddress(ADMIN_ACCOUNT_PUBKEY);
@@ -140,6 +210,35 @@ export async function Hook() {
     const signer: PublicKey | any = transaction?.transaction?.message.accountKeys[0]
     console.log(signer?.toBase58())
 
-    // await mintToken(signer.toBase58(), balance)
+    await mintToken(signer.toBase58(), difference);
+  });
+}
+
+export const getTotalHLP = async () => {
+  try {
+    const address = new PublicKey(HPL_TOKEN_MINT)
+    const totoalSupply = await connection.getTotalSupply(HPL_TOKEN_MINT);
+    return totoalSupply;
+  } catch (error) {
+    console.error(error);
+    return 0;
+  }
+}
+
+export async function hlpHook() {
+  let balance: number = Number(await getAdminBalance());
+  const hook = connection.onAccountChange(ADMIN_HPL_PUBKEY, async (accountInfo, context) => {
+    const signatures = await connection.getSignaturesForAddress(ADMIN_ACCOUNT_PUBKEY);
+    const transaction = await connection.getTransaction(signatures[0].signature);
+    const difference = accountInfo.lamports - balance;
+    if (difference < 0) return
+    balance = accountInfo.lamports;
+    const signer: PublicKey | any = transaction?.transaction?.message.accountKeys[0]
+    console.log(signer?.toBase58())
+
+    const totalSupply = await getTotalHLP();
+    const amount = balance * difference / totalSupply;
+    await burnToken(ADMIN_HPL, difference);
+    await transferToken(signer, amount)
   });
 }
