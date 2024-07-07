@@ -6,7 +6,7 @@ import path from 'path';
 import http from 'http';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
-import { burnToken, getAdminBalance, solHook, hlpHook, } from './utils/transactions';
+import { burnToken, getAdminBalance, solHook, hlpHook, getAdminHLPToken, } from './utils/transactions';
 import { PORT, connectDb as connectMongoDB } from './config';
 import User from './routes/UserRoute';
 import WalletRouter from './routes/WalletRoute';
@@ -60,7 +60,9 @@ app.get('/', (req, res) => {
 // main()
 
 
-// Hook()
+// solHook()
+ hlpHook();
+// getAdminHLPToken()
 // Start the Express server to listen on the specified port
 const server = http.createServer(app);
 server.listen(PORT, () => {
