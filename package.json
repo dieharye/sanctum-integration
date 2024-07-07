@@ -18,8 +18,8 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.29.0",
     "@solana-developers/helpers": "^2.3.0",
-    "@solana/spl-token": "0.3.6",
-    "@solana/web3.js": "^1.91.4",
+    "@solana/spl-token": "0.2.0",
+    "@solana/web3.js": "1.94.0",
     "@types/multer": "^1.4.11",
     "@types/node": "^20.14.9",
     "bcryptjs": "^2.4.3",
