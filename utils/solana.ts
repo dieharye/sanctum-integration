@@ -1,5 +1,5 @@
 import { sign } from 'tweetnacl';
-import * as bs58 from 'bs58';
+import bs58 from 'bs58';
 import { PublicKey } from '@solana/web3.js';
 
 import { SIGN_MESSAGE } from '../config/config';
