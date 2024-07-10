@@ -42,6 +42,7 @@
     "pre-commit": "^1.2.2",
     "swagger-ui-express": "^4.3.0",
     "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1",
     "typescript": "^5.2.2",
     "yamljs": "^0.3.0"
   },

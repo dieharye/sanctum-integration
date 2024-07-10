@@ -20,3 +20,4 @@ export const ADMIN_HLP = "3ajyYMCk79bio5z78ZQu9arw9nv7K8TVwC22EQCru7RU";
 export const HLP_TOKEN_MINT = "AVPhgtjb5yL8e8VcZqJQVRmzLjoSTYgwrdNbKEdLgmTa"
 export const TREASURY_WALLET = "8TKsGzcvpsmr5ekgA96CX6gyoTgGHN8zUo9VuySs6ZDo";
 export const FEE_RATE = 0.1;
+export const SANCTUM_URI = "https://sanctum-s-api.fly.dev/v1/";

@@ -2,7 +2,7 @@
 + Constant Admin (Mav)
 + Assign / Revoke Mangeres (Moriz) by Admin
 + [TBD] Have one BE Admin Wallet / Able to reveal priv key by Admin
-- Mangers able to send Sanctum swap Tx from Admin Wallet
+- Manegers able to send Sanctum swap Tx from Admin Wallet
 + User deposit SOL -> mint HLP
 + User burn HLP -> withdraw SOL [TODO: use any SPL]
 - Store trade histories
