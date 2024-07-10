@@ -6,7 +6,6 @@ import { authMiddleware, AuthRequest } from '../../middleware';
 import User from '../../model/UserModel';
 import { generateRandomNonce, uuid } from '../../utils/generator';
 import { validateEd25519Address, verifySignature } from '../../utils/solana';
-import { getAdminBalance, mintToken } from '../../utils/transactions';
 
 // Create a new instance of the Express Router
 const UserRouter = Router();
@@ -154,7 +153,7 @@ UserRouter.post(
 // @route    GET api/users
 // @desc     Get user by token
 // @access   Private
-UserRouter.get('/', authMiddleware, async (req: AuthRequest, res) => {
+UserRouter.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
   try {
     const user = await User.findById(req.user.id);
     return res.json({
@@ -166,37 +165,11 @@ UserRouter.get('/', authMiddleware, async (req: AuthRequest, res) => {
   }
 });
 
-// @route    POST api/users/deposit
-// @desc     Deposit
-// @access   Private
-UserRouter.post('/deposit', authMiddleware, async (req: AuthRequest, res: Response) => {
-  res.status(200).json({message :"hello"})
-  // try {
-  //   const user = await User.findById(req.user.id);
-  //   if (!user) {
-  //     return res.status(404).send({ error: 'User not found' });
-  //   }
 
-  //   const userId = user._id;
-  //   const { amount } = req.body;
+// @route    POST api/users/trade
+// @desc     Buy USDC
+// @access   Public
+UserRouter.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 
-  //   if (typeof amount !== 'number' || amount <= 0) {
-  //     return res.status(400).send({ error: 'Invalid amount' });
-  //   }
-
-  //   const balance = await getAdminBalance();
-  //   if (balance === 0) {
-  //     return res.status(500).send({ error: 'Failed to retrieve admin balance' });
-  //   }
-
-
-  //   res.status(201).send({ success: true });
-
-  // } catch (error) {
-  //   console.log(error);
-  //   return res.status(500).send({ error: 'Internal Server Error' });
-  // }
-  // res.status(200).json({success: true});
-});
-
+})
 export default UserRouter;

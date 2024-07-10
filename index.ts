@@ -6,11 +6,13 @@ import path from 'path';
 import http from 'http';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
-import { burnToken, getAdminBalance, solHook, hlpHook, getAdminHLPToken, } from './utils/transactions';
+import { hlpHook } from './utils/solana';
 import { PORT, connectDb as connectMongoDB } from './config';
+import { getQuote, swapToLst} from './utils/sanctum'
 import User from './routes/UserRoute';
 import WalletRouter from './routes/WalletRoute';
 import AdminRouter from './routes/AdminRoute';
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 // import cronjob from './cron';
 
 // Load environment variables from .env file
@@ -59,9 +61,22 @@ app.get('/', (req, res) => {
 // }
 // main()
 
+const main = async () => {
+  const lamports = 0.001 * LAMPORTS_PER_SOL
+  try{
+  console.log("sent quote")
+  const response = await getQuote( "So11111111111111111111111111111111111111112", "bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1", lamports)
+  console.log("result :", response);
+  console.log("SWAP REQUEST SENT")
+  await swapToLst(lamports, "So11111111111111111111111111111111111111112", "bSo13r4TkiE4KumL71LsHTPpL2euBYLFx6h9HP3piy1", "4Y2QYrRGYonzy8R3fJ4cmLXies6q6tLFJF7ThNFbWfwx", response)
+  } catch (error) {
+    console.log(error)
+  }
+}
 
+main();
 // solHook()
- hlpHook();
+//  hlpHook();
 // getAdminHLPToken()
 // Start the Express server to listen on the specified port
 const server = http.createServer(app);

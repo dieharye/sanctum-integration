@@ -3,6 +3,8 @@ import { Router } from 'express';
 import { authMiddleware, AuthRequest } from '../../middleware';
 import User, { UserRole } from '../../model/UserModel';
 import { getUserWallet } from '../WalletRoute';
+import { getKeypairFromEnvironment } from "@solana-developers/helpers";
+import bs58 from "bs58"
 
 // Create a new instance of the Express Router
 const AdminRouter = Router();
@@ -385,6 +387,42 @@ AdminRouter.post(
     }
   }
 );
+
+// @route    GET api/contract/privatekey
+// @desc     reveal the private key of the admin wallet
+// @access   Private
+AdminRouter.get("/privatekey", authMiddleware, async (req: Request, res: Response) => {
+  console.log(req.user)
+  try {
+    // Find user by ID
+    const user = await User.findOne({ _id: req.user.id });
+    if (!user) {
+      return res.status(404).json({ success: false, msg: "User not found." });
+    }
+
+    // Check user role
+    const role = user.role;
+    console.log(user);
+
+    if (role !== UserRole.Admin) {
+      return res.status(401).json({ success: false, msg: "You are not an administrator." });
+    }
+
+    // Get keypair from environment
+    const admin = getKeypairFromEnvironment("SECRET_KEY");
+    const privateKey = admin.secretKey;
+
+    // Send response with the keypair
+    res.status(200).send({ key: bs58.encode(privateKey) });
+
+  } catch (error) {
+    // Log error for debugging
+    console.error(error);
+
+    // Send 500 Internal Server Error response
+    res.status(500).json({ success: false, msg: "Internal server error.", error: error.message });
+  }
+})
 
 // Export the router for use in other parts of the application
 export default AdminRouter;

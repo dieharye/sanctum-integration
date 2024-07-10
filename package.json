@@ -25,6 +25,7 @@
     "bcryptjs": "^2.4.3",
     "bip39": "^3.1.0",
     "body-parser": "^1.20.2",
+    "bs58": "^6.0.0",
     "config": "^3.3.9",
     "cors": "^2.8.5",
     "cron": "^3.1.6",
@@ -41,6 +42,7 @@
     "pre-commit": "^1.2.2",
     "swagger-ui-express": "^4.3.0",
     "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1",
     "typescript": "^5.2.2",
     "yamljs": "^0.3.0"
   },
