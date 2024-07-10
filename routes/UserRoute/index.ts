@@ -3,9 +3,12 @@ import { check, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../../config';
 import { authMiddleware, AuthRequest } from '../../middleware';
-import User from '../../model/UserModel';
+import User, {UserRole} from '../../model/UserModel';
 import { generateRandomNonce, uuid } from '../../utils/generator';
 import { validateEd25519Address, verifySignature } from '../../utils/solana';
+import { getQuote, swapToLst } from '../../utils/sanctum'
+import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+
 
 // Create a new instance of the Express Router
 const UserRouter = Router();
@@ -169,7 +172,39 @@ UserRouter.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 // @route    POST api/users/trade
 // @desc     Buy USDC
 // @access   Public
-UserRouter.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
+UserRouter.post('/trade', authMiddleware, async (req: AuthRequest, res: Response) => {
+  console.log(req.user)
+  try {
+    // Find user by ID
+    const user = await User.findOne({ _id: req.user.id });
+    if (!user) {
+      return res.status(404).json({ success: false, msg: "User not found." });
+    }
 
+    // Check user role
+    const role = user.role;
+    console.log(user);
+
+    if (role === UserRole.User) {
+      res.status(401).json({ success: false, msg: "You are neither an administrator nor a manager." });
+    }
+  } catch (error) {
+    res.status(500).json({msg: "Internal Server Error"})
+  }
+
+  const { amount, inputMint, outputMint } = req.body
+  const lamports = amount * LAMPORTS_PER_SOL
+  try {
+    console.log("sent quote")
+    const response = await getQuote(inputMint, outputMint, lamports)
+    console.log("result :", response);
+    console.log("SWAP REQUEST SENT")
+    const result: boolean = await swapToLst(lamports, inputMint, outputMint, response)
+    if (result) res.status(200).json({ msg: "Trading successful" })
+    else res.status(500).json({ msg: "Internal sever error." })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ msg: "Internal sever error." })
+  }
 })
 export default UserRouter;
