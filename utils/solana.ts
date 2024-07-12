@@ -1,7 +1,7 @@
-import { sign } from 'tweetnacl';
+import nacl, { sign } from 'tweetnacl';
 import bs58 from 'bs58';
 import { SIGN_MESSAGE } from '../config/config';
-import { Connection, PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction} from '@solana/web3.js';
+import { Connection, PublicKey, Transaction, SystemProgram, sendAndConfirmTransaction } from '@solana/web3.js';
 import { CONNECTION, ADMIN_ACCOUNT, HLP_TOKEN_MINT, ADMIN_HLP, FEE_RATE, TREASURY_WALLET } from '../config/config';
 import { getOrCreateAssociatedTokenAccount, mintTo, burn } from "@solana/spl-token";
 import { getKeypairFromEnvironment } from "@solana-developers/helpers";
