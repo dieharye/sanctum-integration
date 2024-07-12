@@ -36,7 +36,7 @@ export const swapToLst = async (
     input: string,
     outputLisMint: string,
     quotedAmount: number | undefined,
-): Promise<boolean> => {
+): Promise<string | null> => {
     try {
         const res = await axios.create({ baseURL: SANCTUM_URI }).post("swap", {
             amount: amount.toString(),
@@ -46,7 +46,7 @@ export const swapToLst = async (
             outputLstMint: outputLisMint,
             priorityFee: {
                 Auto: {
-                    max_unit_price_micro_lamports: 1500000,
+                    max_unit_price_micro_lamports: 10000000,
                     unit_limit: 100000
                 },
             },
@@ -65,9 +65,10 @@ export const swapToLst = async (
             transaction.message
         );
 
+        transactionV0.sign([admin]);
+
         transactionV0.message.recentBlockhash = blockhash;
 
-        transactionV0.sign([admin]);
 
         const signature = await connection.sendRawTransaction(
             transactionV0.serialize(),
@@ -78,16 +79,17 @@ export const swapToLst = async (
             }
         );
 
-        console.log(signature);
+        console.log("signature==============================>", signature);
         const sig = await connection.simulateTransaction(transactionV0);
+        console.log(sig)
 
         const tx = await connection.confirmTransaction(signature);
         console.log(tx);
         if (tx) console.log("LST swap is success")
-        return true
+        return signature
     } catch (error) {
         console.log(error);
-        return false
+        return null
     }
 };
 

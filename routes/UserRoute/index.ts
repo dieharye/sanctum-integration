@@ -3,11 +3,12 @@ import { check, validationResult } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET } from '../../config';
 import { authMiddleware, AuthRequest } from '../../middleware';
-import User, {UserRole} from '../../model/UserModel';
+import User, { UserRole } from '../../model/UserModel';
 import { generateRandomNonce, uuid } from '../../utils/generator';
 import { validateEd25519Address, verifySignature } from '../../utils/solana';
 import { getQuote, swapToLst } from '../../utils/sanctum'
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
+import TxModel from '../../model/TxModel'
 
 
 // Create a new instance of the Express Router
@@ -113,6 +114,8 @@ UserRouter.post(
         return res.status(404).json({ error: 'Wallet address not found' });
       }
 
+      console.log(user.walletAddress, user.nonce, signature)
+
       const valid_signature = verifySignature(
         user.walletAddress,
         user.nonce,
@@ -174,9 +177,10 @@ UserRouter.get('/', authMiddleware, async (req: AuthRequest, res: Response) => {
 // @access   Public
 UserRouter.post('/trade', authMiddleware, async (req: AuthRequest, res: Response) => {
   console.log(req.user)
+  let user: any
   try {
     // Find user by ID
-    const user = await User.findOne({ _id: req.user.id });
+    user = await User.findOne({ _id: req.user.id });
     if (!user) {
       return res.status(404).json({ success: false, msg: "User not found." });
     }
@@ -186,10 +190,10 @@ UserRouter.post('/trade', authMiddleware, async (req: AuthRequest, res: Response
     console.log(user);
 
     if (role === UserRole.User) {
-      res.status(401).json({ success: false, msg: "You are neither an administrator nor a manager." });
+      return res.status(401).json({ success: false, msg: "You are neither an administrator nor a manager." });
     }
   } catch (error) {
-    res.status(500).json({msg: "Internal Server Error"})
+    return res.status(500).json({ msg: "Internal Server Error" })
   }
 
   const { amount, inputMint, outputMint } = req.body
@@ -199,12 +203,25 @@ UserRouter.post('/trade', authMiddleware, async (req: AuthRequest, res: Response
     const response = await getQuote(inputMint, outputMint, lamports)
     console.log("result :", response);
     console.log("SWAP REQUEST SENT")
-    const result: boolean = await swapToLst(lamports, inputMint, outputMint, response)
-    if (result) res.status(200).json({ msg: "Trading successful" })
+    const hash = await swapToLst(lamports, inputMint, outputMint, response)
+    if (hash) {
+      const tx = new TxModel({
+        userId: user.id,
+        action: "swap",
+        amount: amount,
+        hash: hash,
+      })
+
+      tx.save()
+      res.status(200).json({ msg: "Trading successful" })
+    }
     else res.status(500).json({ msg: "Internal sever error." })
   } catch (error) {
     console.log(error)
     res.status(500).json({ msg: "Internal sever error." })
   }
+
+
+
 })
 export default UserRouter;

@@ -8,11 +8,9 @@ import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
 import { hlpHook, solHook } from './utils/solana';
 import { PORT, connectDb as connectMongoDB } from './config';
-import { getQuote, swapToLst} from './utils/sanctum'
 import User from './routes/UserRoute';
 import WalletRouter from './routes/WalletRoute';
 import AdminRouter from './routes/AdminRoute';
-import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 // import cronjob from './cron';
 
 // Load environment variables from .env file
